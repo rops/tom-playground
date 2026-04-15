@@ -102,17 +102,26 @@
         /* Force content to fit */
         .reveal .slides section { box-sizing: border-box; }
         .reveal .slides { overflow: visible; }
+
+        /* -- Logo watermark -- */
+        .logo-watermark { position: fixed; bottom: 12px; left: 16px; z-index: 30; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .logo-watermark.visible { opacity: 0.3; }
+        .logo-watermark img { height: 32px; width: auto; filter: brightness(1.2); }
+
+        /* -- Cover logo -- */
+        .cover-logo { height: 300px; width: auto; filter: drop-shadow(0 4px 24px rgba(0,0,0,0.4)); }
     </style>
 </head>
 <body>
 <div class="reveal">
+<div class="logo-watermark"><img src="logo.png" alt="CT"></div>
 <div class="slides">
 
 <!-- =================== A: AZIENDA =================== -->
 
 <!-- 1 COVER -->
 <section data-background-gradient="linear-gradient(160deg, #0c0c1d 0%, #141432 50%, #0c0c1d 100%)">
-    <div class="cover-name">Computer's<br>Technology</div>
+    <img src="logo.png" alt="Computer's Technology" class="cover-logo">
     <p class="cover-sub">Software, Infrastruttura e Sicurezza IT</p>
     <p style="font-size:0.5em; color:var(--slate); margin-top:4px;">Via Cluentina 26/B &mdash; Piediripa di Macerata (MC)</p>
     <span class="cover-badge">Dal 1984</span>
@@ -736,6 +745,13 @@ Reveal.initialize({
     margin: 0.04,
     minScale: 0.2,
     maxScale: 1.5
+});
+
+// Show watermark on all slides except cover
+var wm = document.querySelector('.logo-watermark');
+Reveal.on('slidechanged', function(e) {
+    if (e.indexh === 0) { wm.classList.remove('visible'); }
+    else { wm.classList.add('visible'); }
 });
 </script>
 </body>
