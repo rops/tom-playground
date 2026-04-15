@@ -43,16 +43,16 @@
         .tag-orange { background: var(--orange-dim); color: var(--orange); }
         .tag-slate { background: var(--slate-dim); color: var(--slate); }
 
-        .sub { font-size: 0.6em; color: var(--slate); max-width: 620px; margin: 0 auto 16px auto; line-height: 1.55; }
+        .sub { font-size: 0.6em; color: var(--slate); margin-bottom: 16px; line-height: 1.55; max-width: 620px; display: inline-block !important; text-align: center; }
         .small { font-size: 0.5em; color: var(--slate); }
         .mono { font-family: 'JetBrains Mono', monospace; background: rgba(255,255,255,0.07); padding: 1px 7px; border-radius: 4px; font-size: 0.9em; }
 
         .glass { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; backdrop-filter: blur(8px); }
 
         /* -- Grid helpers -- */
-        .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-        .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
-        .g4 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .g2 { display: inline-grid !important; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
+        .g3 { display: inline-grid !important; grid-template-columns: 1fr 1fr 1fr; gap: 14px; width: 100%; }
+        .g4 { display: inline-grid !important; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
         .flex-c { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
 
         /* -- Card -- */
@@ -61,7 +61,7 @@
         .card-d { font-size: 0.44em; color: var(--slate); line-height: 1.45; }
 
         /* -- Callout box -- */
-        .callout { padding: 12px 16px; border-radius: 8px; border-left: 3px solid var(--blue); background: var(--blue-dim); text-align: left; font-size: 0.52em; color: #cbd5e1; line-height: 1.55; max-width: 600px; margin: 10px auto; }
+        .callout { padding: 12px 16px; border-radius: 8px; border-left: 3px solid var(--blue); background: var(--blue-dim); text-align: left; font-size: 0.52em; color: #cbd5e1; line-height: 1.55; margin: 10px auto; max-width: 600px; display: inline-block !important; }
         .callout.red { border-color: var(--red); background: var(--red-dim); }
         .callout.green { border-color: var(--green); background: var(--green-dim); }
         .callout.purple { border-color: var(--purple); background: var(--purple-dim); }
@@ -752,6 +752,12 @@ var wm = document.querySelector('.logo-watermark');
 Reveal.on('slidechanged', function(e) {
     if (e.indexh === 0) { wm.classList.remove('visible'); }
     else { wm.classList.add('visible'); }
+});
+
+// Fix horizontal centering - reveal.js overrides display:block on <p> elements
+// Use inline-block so text-align:center on parent section centers them
+document.querySelectorAll('.sub, .callout').forEach(function(el) {
+    el.style.setProperty('display', 'inline-block', 'important');
 });
 </script>
 </body>
