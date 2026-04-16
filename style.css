@@ -308,6 +308,8 @@ textarea {
     color: var(--star-color);
     letter-spacing: 2px;
     margin: 0 1rem;
+    cursor: default;       /* Freccia normale, non stanghetta di testo */
+    user-select: none;     /* Impedisce la selezione del testo stelle */
 }
 
 .media-valore {
