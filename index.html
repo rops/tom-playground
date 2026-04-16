@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Visita - Computer's Technology S.r.l.</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- HEADER: titolo della pagina -->
+    <header>
+        <h1>Feedback Visita Aziendale</h1>
+        <p>Computer's Technology S.r.l. — Dicci cosa ne pensi!</p>
+    </header>
+
+    <main>
+
+        <!-- ======================== -->
+        <!-- SEZIONE 1: FORM FEEDBACK -->
+        <!-- ======================== -->
+        <section id="feedback-form">
+            <h2>Lascia il tuo feedback</h2>
+
+            <form id="form-feedback">
+
+                <!-- Campo nome (obbligatorio) -->
+                <div class="campo">
+                    <label for="nome">Il tuo nome</label>
+                    <input type="text" id="nome" name="nome" placeholder="Es. Marco Rossi" required>
+                </div>
+
+                <!-- 
+                    SISTEMA A STELLE
+                    Come funziona:
+                    - Ogni sezione ha 5 radio button (valore 1-5)
+                    - I radio button sono in ordine INVERSO (da 5 a 1) nell'HTML
+                    - Il contenitore ha direction: rtl (right-to-left) nel CSS
+                    - Questo trucco permette di usare il selettore CSS ~ (sibling)
+                      per colorare tutte le stelle precedenti quando ne clicchi una
+                    - Le label mostrano il carattere ★ (stella piena)
+                -->
+
+                <!-- Valutazione: Azienda -->
+                <div class="campo">
+                    <label>Azienda</label>
+                    <div class="stelle" role="radiogroup" aria-label="Valutazione Azienda">
+                        <input type="radio" id="azienda-5" name="rating-azienda" value="5" required>
+                        <label for="azienda-5" title="5 stelle">★</label>
+
+                        <input type="radio" id="azienda-4" name="rating-azienda" value="4">
+                        <label for="azienda-4" title="4 stelle">★</label>
+
+                        <input type="radio" id="azienda-3" name="rating-azienda" value="3">
+                        <label for="azienda-3" title="3 stelle">★</label>
+
+                        <input type="radio" id="azienda-2" name="rating-azienda" value="2">
+                        <label for="azienda-2" title="2 stelle">★</label>
+
+                        <input type="radio" id="azienda-1" name="rating-azienda" value="1">
+                        <label for="azienda-1" title="1 stella">★</label>
+                    </div>
+                </div>
+
+                <!-- Valutazione: Connettore Web/API -->
+                <div class="campo">
+                    <label>Connettore Web/API</label>
+                    <div class="stelle" role="radiogroup" aria-label="Valutazione Connettore Web/API">
+                        <input type="radio" id="web-api-5" name="rating-web-api" value="5" required>
+                        <label for="web-api-5" title="5 stelle">★</label>
+
+                        <input type="radio" id="web-api-4" name="rating-web-api" value="4">
+                        <label for="web-api-4" title="4 stelle">★</label>
+
+                        <input type="radio" id="web-api-3" name="rating-web-api" value="3">
+                        <label for="web-api-3" title="3 stelle">★</label>
+
+                        <input type="radio" id="web-api-2" name="rating-web-api" value="2">
+                        <label for="web-api-2" title="2 stelle">★</label>
+
+                        <input type="radio" id="web-api-1" name="rating-web-api" value="1">
+                        <label for="web-api-1" title="1 stella">★</label>
+                    </div>
+                </div>
+
+                <!-- Valutazione: Cybersicurezza -->
+                <div class="campo">
+                    <label>Cybersicurezza</label>
+                    <div class="stelle" role="radiogroup" aria-label="Valutazione Cybersicurezza">
+                        <input type="radio" id="cybersicurezza-5" name="rating-cybersicurezza" value="5" required>
+                        <label for="cybersicurezza-5" title="5 stelle">★</label>
+
+                        <input type="radio" id="cybersicurezza-4" name="rating-cybersicurezza" value="4">
+                        <label for="cybersicurezza-4" title="4 stelle">★</label>
+
+                        <input type="radio" id="cybersicurezza-3" name="rating-cybersicurezza" value="3">
+                        <label for="cybersicurezza-3" title="3 stelle">★</label>
+
+                        <input type="radio" id="cybersicurezza-2" name="rating-cybersicurezza" value="2">
+                        <label for="cybersicurezza-2" title="2 stelle">★</label>
+
+                        <input type="radio" id="cybersicurezza-1" name="rating-cybersicurezza" value="1">
+                        <label for="cybersicurezza-1" title="1 stella">★</label>
+                    </div>
+                </div>
+
+                <!-- Valutazione: AI e Futuro -->
+                <div class="campo">
+                    <label>AI e Futuro</label>
+                    <div class="stelle" role="radiogroup" aria-label="Valutazione AI e Futuro">
+                        <input type="radio" id="ai-futuro-5" name="rating-ai-futuro" value="5" required>
+                        <label for="ai-futuro-5" title="5 stelle">★</label>
+
+                        <input type="radio" id="ai-futuro-4" name="rating-ai-futuro" value="4">
+                        <label for="ai-futuro-4" title="4 stelle">★</label>
+
+                        <input type="radio" id="ai-futuro-3" name="rating-ai-futuro" value="3">
+                        <label for="ai-futuro-3" title="3 stelle">★</label>
+
+                        <input type="radio" id="ai-futuro-2" name="rating-ai-futuro" value="2">
+                        <label for="ai-futuro-2" title="2 stelle">★</label>
+
+                        <input type="radio" id="ai-futuro-1" name="rating-ai-futuro" value="1">
+                        <label for="ai-futuro-1" title="1 stella">★</label>
+                    </div>
+                </div>
+
+                <!-- Valutazione: Attività Pratica -->
+                <div class="campo">
+                    <label>Attività Pratica</label>
+                    <div class="stelle" role="radiogroup" aria-label="Valutazione Attività Pratica">
+                        <input type="radio" id="attivita-pratica-5" name="rating-attivita-pratica" value="5" required>
+                        <label for="attivita-pratica-5" title="5 stelle">★</label>
+
+                        <input type="radio" id="attivita-pratica-4" name="rating-attivita-pratica" value="4">
+                        <label for="attivita-pratica-4" title="4 stelle">★</label>
+
+                        <input type="radio" id="attivita-pratica-3" name="rating-attivita-pratica" value="3">
+                        <label for="attivita-pratica-3" title="3 stelle">★</label>
+
+                        <input type="radio" id="attivita-pratica-2" name="rating-attivita-pratica" value="2">
+                        <label for="attivita-pratica-2" title="2 stelle">★</label>
+
+                        <input type="radio" id="attivita-pratica-1" name="rating-attivita-pratica" value="1">
+                        <label for="attivita-pratica-1" title="1 stella">★</label>
+                    </div>
+                </div>
+
+                <!-- Commento libero (FACOLTATIVO) -->
+                <div class="campo">
+                    <label for="commento">Commento <span class="facoltativo">(facoltativo)</span></label>
+                    <textarea id="commento" name="commento" rows="4" placeholder="Scrivi qui le tue impressioni sulla visita..."></textarea>
+                </div>
+
+                <!-- Pulsante invio -->
+                <button type="submit" id="btn-invia">Invia Feedback</button>
+
+            </form>
+        </section>
+
+        <!-- ============================ -->
+        <!-- SEZIONE 2: DASHBOARD / STATS -->
+        <!-- ============================ -->
+        <section id="dashboard">
+            <h2>Statistiche</h2>
+
+            <!-- Contatore totale risposte -->
+            <div class="stat-card" id="totale-risposte">
+                <span class="stat-numero">0</span>
+                <span class="stat-etichetta">Risposte ricevute</span>
+            </div>
+
+            <!-- Medie per sezione -->
+            <div class="medie-container">
+                <h3>Media voti per sezione</h3>
+
+                <div class="media-riga">
+                    <span class="media-nome">Azienda</span>
+                    <span class="media-stelle" id="media-azienda">☆☆☆☆☆</span>
+                    <span class="media-valore" id="media-azienda-valore">-</span>
+                </div>
+
+                <div class="media-riga">
+                    <span class="media-nome">Connettore Web/API</span>
+                    <span class="media-stelle" id="media-web-api">☆☆☆☆☆</span>
+                    <span class="media-valore" id="media-web-api-valore">-</span>
+                </div>
+
+                <div class="media-riga">
+                    <span class="media-nome">Cybersicurezza</span>
+                    <span class="media-stelle" id="media-cybersicurezza">☆☆☆☆☆</span>
+                    <span class="media-valore" id="media-cybersicurezza-valore">-</span>
+                </div>
+
+                <div class="media-riga">
+                    <span class="media-nome">AI e Futuro</span>
+                    <span class="media-stelle" id="media-ai-futuro">☆☆☆☆☆</span>
+                    <span class="media-valore" id="media-ai-futuro-valore">-</span>
+                </div>
+
+                <div class="media-riga">
+                    <span class="media-nome">Attività Pratica</span>
+                    <span class="media-stelle" id="media-attivita-pratica">☆☆☆☆☆</span>
+                    <span class="media-valore" id="media-attivita-pratica-valore">-</span>
+                </div>
+            </div>
+
+            <!-- Ultimi commenti -->
+            <div class="commenti-container">
+                <h3>Ultimi commenti</h3>
+                <div id="lista-commenti">
+                    <p class="placeholder-commenti">Nessun commento ancora. Sii il primo!</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>Attività pratica ITC — Computer's Technology S.r.l. &copy; 2026</p>
+    </footer>
+
+    <!-- JavaScript: lo caricheremo dopo -->
+    <script src="app.js"></script>
+
+</body>
+</html>

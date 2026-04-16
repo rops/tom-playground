@@ -1,0 +1,473 @@
+/* ============================================
+   STYLE.CSS - Feedback Visita Aziendale
+   Dark theme, responsive, stelle cliccabili
+   ============================================ */
+
+/* --- RESET E BASE --- 
+   Il "reset" rimuove margini e padding di default del browser.
+   box-sizing: border-box fa sì che padding e bordi siano 
+   inclusi nella larghezza totale dell'elemento (molto comodo!)
+*/
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* --- VARIABILI CSS (Custom Properties) ---
+   Definiamo i colori in un unico posto così è facile
+   cambiarli tutti insieme. Si usano con var(--nome).
+   Questo si chiama "design token" ed è una best practice.
+*/
+:root {
+    --bg-primary: #0f0f1a;
+    --bg-secondary: #1a1a2e;
+    --bg-card: #16213e;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0b0;
+    --accent: #e94560;
+    --accent-hover: #ff6b81;
+    --star-color: #ffc107;
+    --star-empty: #444466;
+    --success: #00c853;
+    --border: #2a2a4a;
+    --radius: 12px;
+}
+
+/* --- BODY ---
+   font-family: lista di font "fallback". Il browser usa il primo
+   disponibile. -apple-system e Segoe UI coprono Mac e Windows.
+*/
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* --- HEADER --- */
+header {
+    text-align: center;
+    padding: 2.5rem 1rem 2rem;
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+    border-bottom: 2px solid var(--accent);
+}
+
+header h1 {
+    font-size: 2rem;
+    color: #ffffff;
+    margin-bottom: 0.3rem;
+}
+
+header p {
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+}
+
+/* --- MAIN: layout generale ---
+   max-width limita la larghezza su schermi grandi.
+   margin: 0 auto centra l'elemento orizzontalmente.
+*/
+main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+/* --- SEZIONI (form e dashboard) --- */
+section {
+    background-color: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 2rem;
+    border: 1px solid var(--border);
+}
+
+section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: #ffffff;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent);
+    display: inline-block;
+}
+
+/* --- CAMPI DEL FORM ---
+   .campo è il contenitore di ogni campo (label + input).
+   Usa flexbox in colonna per impilare label sopra e input sotto.
+*/
+.campo {
+    margin-bottom: 1.5rem;
+}
+
+.campo > label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+/* Etichetta "(facoltativo)" accanto al commento */
+.facoltativo {
+    font-weight: 400;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+/* --- INPUT TEXT e TEXTAREA ---
+   width: 100% li fa occupare tutta la larghezza disponibile.
+   transition aggiunge un'animazione fluida quando il campo
+   riceve il focus (il bordo cambia colore gradualmente).
+*/
+input[type="text"],
+textarea {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    outline: none;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.2);
+}
+
+/* Placeholder (testo grigio di suggerimento) */
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* ============================================
+   STELLE CLICCABILI - IL TRUCCO CSS!
+   ============================================
+   Ecco come funziona:
+   
+   1. I radio button sono nascosti (display: none)
+   2. Le label mostrano il carattere ★
+   3. Il contenitore ha direction: rtl (destra→sinistra)
+      Questo INVERTE l'ordine visivo: nell'HTML abbiamo 5,4,3,2,1
+      ma sullo schermo si vedono 1,2,3,4,5 (da sinistra a destra)
+   4. Quando clicchi una stella, il selettore ~ (general sibling)
+      colora tutte le label SUCCESSIVE nel DOM... che visivamente
+      sono quelle a SINISTRA grazie al rtl!
+   
+   Risultato: clicchi la stella 3, si colorano 1, 2 e 3. Magia CSS!
+*/
+.stelle {
+    direction: rtl;        /* Inverte l'ordine visivo */
+    display: inline-flex;  /* Le stelle stanno sulla stessa riga */
+    gap: 0.15rem;
+}
+
+/* Nascondiamo i radio button veri */
+.stelle input[type="radio"] {
+    display: none;
+}
+
+/* Stile base delle stelle (non selezionate) */
+.stelle label {
+    font-size: 2rem;
+    color: var(--star-empty);
+    cursor: pointer;
+    transition: color 0.15s ease, transform 0.15s ease;
+    user-select: none;     /* Impedisce la selezione del testo */
+}
+
+/* Hover: la stella sotto il mouse si ingrandisce */
+.stelle label:hover {
+    transform: scale(1.2);
+}
+
+/* 
+   Quando una stella è selezionata (:checked), coloriamo:
+   - la sua label (+ combinator = fratello adiacente)
+   - tutte le label successive (~ combinator = fratelli generali)
+   
+   Grazie a direction: rtl, "successive" = visivamente a sinistra!
+*/
+.stelle input[type="radio"]:checked + label,
+.stelle input[type="radio"]:checked ~ label {
+    color: var(--star-color);
+}
+
+/* Hover su una stella → colora anche tutte quelle dopo (a sinistra) */
+.stelle label:hover,
+.stelle label:hover ~ label {
+    color: var(--star-color);
+    opacity: 0.8;
+}
+
+/* --- PULSANTE INVIO --- 
+   Un bel bottone con gradiente e animazione al hover.
+   cursor: pointer mostra la manina quando ci passi sopra.
+*/
+#btn-invia {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    background: linear-gradient(135deg, var(--accent), #c0392b);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    letter-spacing: 0.5px;
+}
+
+#btn-invia:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4);
+}
+
+#btn-invia:active {
+    transform: translateY(0);
+}
+
+/* ============================================
+   DASHBOARD / STATISTICHE
+   ============================================ */
+
+/* Card del totale risposte */
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(135deg, var(--accent), #c0392b);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.stat-numero {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1;
+}
+
+.stat-etichetta {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 0.3rem;
+}
+
+/* Container delle medie */
+.medie-container {
+    margin-bottom: 2rem;
+}
+
+.medie-container h3,
+.commenti-container h3 {
+    font-size: 1.15rem;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+/* Singola riga media (nome + stelle + valore numerico) */
+.media-riga {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--border);
+}
+
+.media-nome {
+    flex: 1;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.media-stelle {
+    font-size: 1.3rem;
+    color: var(--star-color);
+    letter-spacing: 2px;
+    margin: 0 1rem;
+}
+
+.media-valore {
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 2.5rem;
+    text-align: right;
+    font-size: 0.95rem;
+}
+
+/* --- ULTIMI COMMENTI --- */
+.commenti-container {
+    margin-top: 1rem;
+}
+
+.placeholder-commenti {
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    padding: 1.5rem;
+}
+
+/* Singolo commento nella lista */
+.commento-item {
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 0.75rem;
+    border-left: 3px solid var(--accent);
+}
+
+.commento-item .commento-autore {
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+}
+
+.commento-item .commento-testo {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.commento-item .commento-data {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+}
+
+/* --- FOOTER --- */
+footer {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================
+   
+   @media query: cambia gli stili quando lo schermo
+   è più piccolo di una certa larghezza.
+   
+   "Mobile-first" significa che il design base è per mobile,
+   e aggiungiamo complessità per schermi più grandi.
+   Qui facciamo il contrario per semplicità (desktop-first),
+   e riduciamo dimensioni per mobile.
+*/
+
+/* Tablet e schermi piccoli */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    section {
+        padding: 1.5rem 1rem;
+    }
+
+    .stelle label {
+        font-size: 1.7rem;
+    }
+
+    .media-riga {
+        flex-wrap: wrap;
+        gap: 0.3rem;
+    }
+
+    .media-nome {
+        flex-basis: 100%;
+        font-size: 0.9rem;
+    }
+
+    .media-stelle {
+        margin-left: 0;
+    }
+}
+
+/* Smartphone */
+@media (max-width: 480px) {
+    header {
+        padding: 1.5rem 0.8rem 1.2rem;
+    }
+
+    header h1 {
+        font-size: 1.3rem;
+    }
+
+    header p {
+        font-size: 0.9rem;
+    }
+
+    main {
+        padding: 1rem 0.7rem;
+    }
+
+    section {
+        padding: 1.2rem 0.8rem;
+    }
+
+    .stelle label {
+        font-size: 1.5rem;
+    }
+
+    .stat-numero {
+        font-size: 2.5rem;
+    }
+
+    #btn-invia {
+        font-size: 1rem;
+        padding: 0.85rem;
+    }
+}
+
+/* ============================================
+   ANIMAZIONE MESSAGGIO DI CONFERMA
+   Apparirà quando l'utente invia il feedback (via JS)
+   ============================================ */
+.messaggio-conferma {
+    background-color: var(--success);
+    color: #ffffff;
+    text-align: center;
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
