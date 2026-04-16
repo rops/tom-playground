@@ -465,6 +465,18 @@ footer {
     animation: slideIn 0.4s ease;
 }
 
+/* Messaggio di errore (connessione fallita, ecc.) */
+.messaggio-errore {
+    background-color: #e74c3c;
+    color: #ffffff;
+    text-align: center;
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    animation: slideIn 0.4s ease;
+}
+
 @keyframes slideIn {
     from {
         opacity: 0;

@@ -2,16 +2,23 @@
    APP.JS - Logica della Web App Feedback
    
    Questo file gestisce:
-   1. Il salvataggio dei feedback in localStorage
-   2. Il calcolo delle statistiche (medie, totale)
-   3. L'aggiornamento della dashboard
-   4. La validazione e l'invio del form
+   1. Il salvataggio dei feedback in localStorage (backup locale)
+   2. L'invio dei feedback a Google Sheets (dati condivisi)
+   3. Il caricamento dei feedback remoti da Google Sheets
+   4. Il calcolo delle statistiche (medie, totale)
+   5. L'aggiornamento della dashboard
+   6. La validazione e l'invio del form
    ============================================ */
 
 // --- COSTANTI ---
 // La chiave con cui salviamo i dati in localStorage.
 // localStorage funziona a coppie chiave-valore (come un dizionario).
 const STORAGE_KEY = 'feedbacks';
+
+// URL del Google Apps Script (Web App)
+// Questo è l'endpoint che riceve (POST) e restituisce (GET) i feedback.
+// Funziona come un mini-server gratuito gestito da Google.
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrddJdWMKJ2vz4KuWl5-1mHTqJdFY4IAyR_brDWhgiID3202iI39DvGDY5o6fgZZQ2lg/exec';
 
 // Le sezioni da valutare. Usiamo un array di oggetti
 // così possiamo scorrere con un ciclo forEach invece
@@ -24,9 +31,13 @@ const SEZIONI = [
     { nome: 'Attività Pratica',   chiave: 'attivita-pratica', inputName: 'rating-attivita-pratica' }
 ];
 
+// Variabile globale che conterrà i feedback scaricati da Google Sheets.
+// La usiamo per evitare di riscaricare i dati ogni volta che aggiorniamo la dashboard.
+let feedbackRemoti = [];
+
 
 /* ============================================
-   1. GESTIONE localStorage
+   1. GESTIONE localStorage (BACKUP LOCALE)
    ============================================
    
    localStorage salva solo STRINGHE. Per salvare un array
@@ -36,13 +47,16 @@ const SEZIONI = [
    
    Esempio:
    { nome: "Marco", voto: 5 }  →  '{"nome":"Marco","voto":5}'
+   
+   Manteniamo localStorage come BACKUP: se Google Sheets
+   non è raggiungibile, i dati non si perdono.
 */
 
 /**
  * Legge tutti i feedback salvati in localStorage.
  * Se non ce ne sono, ritorna un array vuoto [].
  */
-function getFeedbacks() {
+function getFeedbacksLocali() {
     const dati = localStorage.getItem(STORAGE_KEY);
     
     // Se non c'è niente salvato, dati sarà null
@@ -55,27 +69,109 @@ function getFeedbacks() {
 }
 
 /**
- * Salva l'array di feedback in localStorage.
- * Sovrascrive i dati precedenti con quelli nuovi.
+ * Salva un singolo feedback in localStorage (backup).
+ * Legge → aggiunge → riscrive.
  */
-function salvaFeedbacks(feedbacks) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(feedbacks));
-}
-
-/**
- * Aggiunge un singolo feedback all'array esistente.
- * Legge → aggiunge → riscrive. È il pattern classico
- * per "appendere" dati a localStorage.
- */
-function aggiungiFeedback(feedback) {
-    const feedbacks = getFeedbacks();
+function salvaFeedbackLocale(feedback) {
+    const feedbacks = getFeedbacksLocali();
     feedbacks.push(feedback);
-    salvaFeedbacks(feedbacks);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(feedbacks));
 }
 
 
 /* ============================================
-   2. RACCOLTA DATI DAL FORM
+   2. COMUNICAZIONE CON GOOGLE SHEETS
+   ============================================
+   
+   Usiamo fetch() per comunicare con Google Apps Script.
+   
+   fetch() è una funzione nativa del browser che fa richieste
+   HTTP (come quando il browser carica una pagina web, ma
+   lo facciamo da JavaScript in modo "invisibile").
+   
+   Le operazioni di rete sono ASINCRONE: non danno risultato
+   immediato (il server deve ricevere la richiesta, elaborarla
+   e rispondere). Per questo usiamo async/await:
+   
+   - async → dice che la funzione contiene operazioni asincrone
+   - await → "aspetta qui finché non arriva la risposta"
+   
+   Senza await, il codice continuerebbe SENZA aspettare
+   la risposta del server, e i dati non sarebbero pronti!
+*/
+
+/**
+ * Invia un feedback a Google Sheets tramite richiesta POST.
+ * 
+ * POST è il metodo HTTP usato per INVIARE dati a un server.
+ * (GET è per RICHIEDERE dati, POST per INVIARLI)
+ * 
+ * Ritorna true se l'invio è andato a buon fine, false se c'è stato un errore.
+ */
+async function inviaFeedbackRemoto(feedback) {
+    try {
+        // fetch() fa la richiesta HTTP
+        const risposta = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',           // Metodo: stiamo INVIANDO dati
+            mode: 'no-cors',          // Necessario per Google Apps Script
+            headers: {
+                'Content-Type': 'application/json'  // Diciamo al server che i dati sono in formato JSON
+            },
+            body: JSON.stringify(feedback)  // Convertiamo l'oggetto in stringa JSON
+        });
+        
+        // mode: 'no-cors' non ci permette di leggere la risposta,
+        // ma se arriviamo qui senza errori, l'invio è andato a buon fine
+        console.log('Feedback inviato a Google Sheets!');
+        return true;
+        
+    } catch (errore) {
+        // Se c'è un errore (es. nessuna connessione internet),
+        // lo logghiamo ma NON blocchiamo l'app.
+        // Il feedback è comunque salvato in localStorage!
+        console.error('Errore invio a Google Sheets:', errore);
+        return false;
+    }
+}
+
+/**
+ * Carica tutti i feedback da Google Sheets tramite richiesta GET.
+ * 
+ * GET è il metodo HTTP usato per RICHIEDERE dati da un server.
+ * È il metodo di default di fetch() (non serve specificarlo).
+ * 
+ * Ritorna l'array di feedback, o un array vuoto se c'è un errore.
+ */
+async function caricaFeedbackRemoti() {
+    try {
+        const risposta = await fetch(GOOGLE_SCRIPT_URL);
+        
+        // .json() converte la risposta del server da stringa JSON a oggetto JS
+        // (è l'equivalente di JSON.parse, ma per le risposte fetch)
+        const dati = await risposta.json();
+        
+        // Verifichiamo che sia effettivamente un array
+        if (Array.isArray(dati)) {
+            feedbackRemoti = dati;
+            console.log(`Caricati ${dati.length} feedback da Google Sheets`);
+            return dati;
+        }
+        
+        console.warn('Risposta inattesa da Google Sheets:', dati);
+        return [];
+        
+    } catch (errore) {
+        console.error('Errore caricamento da Google Sheets:', errore);
+        // Se non riusciamo a caricare da remoto, usiamo i dati locali come fallback
+        console.log('Uso dati locali come fallback');
+        feedbackRemoti = getFeedbacksLocali();
+        return feedbackRemoti;
+    }
+}
+
+
+/* ============================================
+   3. RACCOLTA DATI DAL FORM
    ============================================
    
    Quando l'utente clicca "Invia Feedback", dobbiamo
@@ -134,20 +230,23 @@ function raccogliDatiForm() {
 
 
 /* ============================================
-   3. CALCOLO STATISTICHE
+   4. CALCOLO STATISTICHE
    ============================================
    
    Calcoliamo:
    - Il totale delle risposte
    - La media dei voti per ogni sezione
+   
+   Ora usa i dati REMOTI (da Google Sheets) invece dei locali,
+   così tutti i visitatori vedono le stesse statistiche!
 */
 
 /**
- * Calcola le statistiche da tutti i feedback salvati.
+ * Calcola le statistiche da un array di feedback.
+ * Accetta un parametro: l'array di feedback da analizzare.
  * Ritorna un oggetto con totale e medie per sezione.
  */
-function calcolaStatistiche() {
-    const feedbacks = getFeedbacks();
+function calcolaStatistiche(feedbacks) {
     const totale = feedbacks.length;
     
     // Se non ci sono feedback, ritorniamo tutto a zero
@@ -185,7 +284,7 @@ function calcolaStatistiche() {
 
 
 /* ============================================
-   4. AGGIORNAMENTO DASHBOARD
+   5. AGGIORNAMENTO DASHBOARD
    ============================================
    
    Queste funzioni aggiornano l'HTML della dashboard
@@ -209,13 +308,12 @@ function generaStelle(voto) {
 
 /**
  * Aggiorna tutta la sezione dashboard con le statistiche correnti.
+ * Usa i feedback remoti (da Google Sheets) come fonte dati principale.
  */
 function aggiornaDashboard() {
-    const stats = calcolaStatistiche();
+    const stats = calcolaStatistiche(feedbackRemoti);
     
     // Aggiorna il contatore totale risposte
-    // querySelector cerca dentro l'elemento con id="totale-risposte"
-    // il figlio con classe .stat-numero
     document.querySelector('#totale-risposte .stat-numero').textContent = stats.totale;
     
     // Aggiorna medie per ogni sezione
@@ -241,13 +339,12 @@ function aggiornaDashboard() {
  * Massimo 10 commenti, dal più recente al meno recente.
  */
 function aggiornaCommenti() {
-    const feedbacks = getFeedbacks();
     const container = document.getElementById('lista-commenti');
     
     // Filtriamo solo i feedback CON commento
     // .filter() crea un nuovo array con solo gli elementi
     // che passano il test (commento non vuoto)
-    const conCommento = feedbacks
+    const conCommento = feedbackRemoti
         .filter(fb => fb.commento && fb.commento.length > 0)
         .reverse()    // Dal più recente
         .slice(0, 10); // Massimo 10
@@ -305,32 +402,34 @@ function escapeHTML(testo) {
 
 
 /* ============================================
-   5. GESTIONE INVIO FORM
+   6. GESTIONE INVIO FORM
    ============================================
    
    L'"event listener" è il modo in cui JavaScript
    reagisce alle azioni dell'utente. Qui ascoltiamo
    l'evento "submit" del form (quando clicca "Invia").
+   
+   La funzione è ora ASYNC perché deve aspettare
+   la risposta di Google Sheets (operazione di rete).
 */
 
 /**
- * Mostra un messaggio di conferma verde sopra il form.
+ * Mostra un messaggio sopra il form.
+ * Il parametro "tipo" può essere 'successo' o 'errore'.
  * Il messaggio scompare dopo 3 secondi.
  */
-function mostraConferma(messaggio) {
-    // Creiamo un nuovo elemento <div> via JavaScript
+function mostraMessaggio(messaggio, tipo) {
     const div = document.createElement('div');
-    div.className = 'messaggio-conferma';
+    div.className = tipo === 'errore' ? 'messaggio-errore' : 'messaggio-conferma';
     div.textContent = messaggio;
     
-    // Lo inseriamo prima del form
     const form = document.getElementById('form-feedback');
     form.parentNode.insertBefore(div, form);
     
     // setTimeout esegue una funzione dopo X millisecondi
     // 3000 ms = 3 secondi
     setTimeout(() => {
-        div.remove(); // Rimuove l'elemento dal DOM
+        div.remove();
     }, 3000);
 }
 
@@ -347,68 +446,89 @@ function resetForm() {
  * Gestisce l'evento di invio del form.
  * È la funzione principale che orchestra tutto:
  * 1. Raccoglie i dati
- * 2. Li salva in localStorage
- * 3. Aggiorna la dashboard
- * 4. Mostra conferma e resetta il form
+ * 2. Li salva in localStorage (backup)
+ * 3. Li invia a Google Sheets (condivisi)
+ * 4. Ricarica i dati remoti e aggiorna la dashboard
+ * 5. Mostra conferma e resetta il form
  */
-function gestisciInvio(evento) {
+async function gestisciInvio(evento) {
     // preventDefault() impedisce al browser di ricaricare la pagina.
-    // Di default, quando invii un <form>, il browser ricarica.
-    // Noi vogliamo gestire tutto con JavaScript senza ricaricare!
     evento.preventDefault();
     
     // 1. Raccogliamo i dati
     const feedback = raccogliDatiForm();
     
     if (!feedback) {
-        // Non dovrebbe succedere grazie a "required" nell'HTML,
-        // ma è buona pratica avere una doppia validazione
-        // (lato HTML + lato JavaScript)
         alert('Per favore compila tutti i campi obbligatori e seleziona tutte le stelle.');
         return;
     }
     
-    // 2. Salviamo in localStorage
-    aggiungiFeedback(feedback);
+    // Disabilitiamo il bottone durante l'invio per evitare doppi click
+    const btnInvia = document.getElementById('btn-invia');
+    btnInvia.disabled = true;
+    btnInvia.textContent = 'Invio in corso...';
     
-    // 3. Aggiorniamo la dashboard
-    aggiornaDashboard();
+    // 2. Salviamo in localStorage (backup locale)
+    salvaFeedbackLocale(feedback);
     
-    // 4. Conferma e reset
-    mostraConferma(`Grazie ${feedback.nome}! Il tuo feedback è stato salvato.`);
+    // 3. Inviamo a Google Sheets
+    const invioRiuscito = await inviaFeedbackRemoto(feedback);
+    
+    // 4. Ricarichiamo i dati remoti e aggiorniamo la dashboard
+    // Aspettiamo un attimo che Google Sheets processi i dati
+    // (il salvataggio su Sheets non è istantaneo)
+    setTimeout(async () => {
+        await caricaFeedbackRemoti();
+        aggiornaDashboard();
+    }, 1500);
+    
+    // 5. Conferma e reset
+    if (invioRiuscito) {
+        mostraMessaggio(`Grazie ${feedback.nome}! Il tuo feedback è stato salvato.`, 'successo');
+    } else {
+        mostraMessaggio(`Feedback salvato localmente. Connessione al server non riuscita.`, 'errore');
+    }
     resetForm();
+    
+    // Riabilitiamo il bottone
+    btnInvia.disabled = false;
+    btnInvia.textContent = 'Invia Feedback';
     
     // Scrolla dolcemente verso la dashboard per vedere i risultati
     document.getElementById('dashboard').scrollIntoView({
-        behavior: 'smooth',  // Animazione fluida
-        block: 'start'       // Si posiziona all'inizio della sezione
+        behavior: 'smooth',
+        block: 'start'
     });
 }
 
 
 /* ============================================
-   6. INIZIALIZZAZIONE
+   7. INIZIALIZZAZIONE
    ============================================
    
    DOMContentLoaded è l'evento che si attiva quando
    l'HTML è stato completamente caricato e parsato.
    È il momento sicuro per iniziare a manipolare il DOM.
    
-   Se provassimo a cercare elementi prima di questo evento,
-   potremmo non trovarli perché non sono ancora stati creati!
+   All'avvio, carichiamo i feedback da Google Sheets
+   per mostrare le statistiche condivise di tutti gli utenti.
 */
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     
     // Colleghiamo l'evento submit del form alla nostra funzione
     const form = document.getElementById('form-feedback');
     form.addEventListener('submit', gestisciInvio);
     
-    // Carichiamo la dashboard con i dati esistenti
-    // (se ci sono feedback salvati da sessioni precedenti)
+    // Carichiamo i feedback da Google Sheets (dati condivisi)
+    console.log('Caricamento feedback da Google Sheets...');
+    await caricaFeedbackRemoti();
+    
+    // Aggiorniamo la dashboard con i dati remoti
     aggiornaDashboard();
     
     // Log in console per debug (visibile con F12 → Console)
     console.log('App Feedback inizializzata!');
-    console.log(`Feedback salvati: ${getFeedbacks().length}`);
+    console.log(`Feedback remoti: ${feedbackRemoti.length}`);
+    console.log(`Feedback locali (backup): ${getFeedbacksLocali().length}`);
 });
