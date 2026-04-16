@@ -313,8 +313,8 @@ function generaStelle(voto) {
 function aggiornaDashboard() {
     const stats = calcolaStatistiche(feedbackRemoti);
     
-    // Aggiorna il contatore totale risposte
-    document.querySelector('#totale-risposte .stat-numero').textContent = stats.totale;
+    // Aggiorna il contatore totale risposte con animazione
+    animaContatore(stats.totale);
     
     // Aggiorna medie per ogni sezione
     SEZIONI.forEach(sezione => {
@@ -337,13 +337,14 @@ function aggiornaDashboard() {
  * Mostra gli ultimi commenti nella dashboard.
  * Mostra solo i feedback che hanno un commento non vuoto.
  * Massimo 10 commenti, dal più recente al meno recente.
+ * 
+ * ANIMAZIONE: ogni commento ha un ritardo crescente (--delay)
+ * che crea l'effetto "scivolano dentro uno dopo l'altro".
  */
 function aggiornaCommenti() {
     const container = document.getElementById('lista-commenti');
     
     // Filtriamo solo i feedback CON commento
-    // .filter() crea un nuovo array con solo gli elementi
-    // che passano il test (commento non vuoto)
     const conCommento = feedbackRemoti
         .filter(fb => fb.commento && fb.commento.length > 0)
         .reverse()    // Dal più recente
@@ -356,10 +357,9 @@ function aggiornaCommenti() {
     }
     
     // Creiamo l'HTML per ogni commento
-    // .map() trasforma ogni oggetto in una stringa HTML
-    // .join('') le unisce tutte in una sola stringa
-    container.innerHTML = conCommento.map(fb => {
-        // Formattiamo la data in modo leggibile
+    // L'indice (i) viene usato per calcolare il ritardo dell'animazione:
+    // il primo commento entra subito, il secondo dopo 0.1s, il terzo dopo 0.2s, ecc.
+    container.innerHTML = conCommento.map((fb, i) => {
         const data = new Date(fb.data);
         const dataFormattata = data.toLocaleDateString('it-IT', {
             day: '2-digit',
@@ -369,14 +369,10 @@ function aggiornaCommenti() {
             minute: '2-digit'
         });
         
-        // Usiamo i template literal (backtick `) per creare HTML
-        // con variabili inserite dentro ${...}
-        // 
-        // SICUREZZA: usiamo escapeHTML() per prevenire attacchi XSS
-        // (Cross-Site Scripting). Se qualcuno scrive <script>...</script>
-        // nel commento, non verrà eseguito come codice!
+        // style="--delay: 0.1s" → la variabile CSS custom viene usata
+        // in style.css come animation-delay: var(--delay)
         return `
-            <div class="commento-item">
+            <div class="commento-item" style="--delay: ${i * 0.1}s">
                 <div class="commento-autore">${escapeHTML(fb.nome)}</div>
                 <div class="commento-testo">${escapeHTML(fb.commento)}</div>
                 <div class="commento-data">${dataFormattata}</div>
@@ -514,11 +510,156 @@ async function gestisciInvio(evento) {
    per mostrare le statistiche condivise di tutti gli utenti.
 */
 
+/* ============================================
+   8. ANIMAZIONI
+   ============================================
+   
+   Qui gestiamo le animazioni che richiedono JavaScript:
+   - IntersectionObserver per il fade-in allo scroll
+   - Bounce delle stelle al click
+   - Contatore animato del totale risposte
+*/
+
+/**
+ * INTERSECTION OBSERVER - Fade-in allo scroll
+ * 
+ * IntersectionObserver è un'API del browser che "osserva"
+ * quando un elemento entra o esce dalla viewport (la parte
+ * visibile della pagina).
+ * 
+ * Quando un elemento con classe .animato diventa visibile,
+ * gli aggiungiamo la classe .visibile che attiva la transizione
+ * CSS (opacity + translateY).
+ * 
+ * threshold: 0.1 → l'animazione scatta quando almeno il 10%
+ * dell'elemento è visibile.
+ */
+function inizializzaFadeIn() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visibile');
+                // Una volta animato, smettiamo di osservarlo (performance)
+                observer.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.1
+    });
+    
+    // Aggiungiamo la classe .animato a tutti gli elementi da animare
+    // e li registriamo nell'observer
+    const elementiDaAnimare = document.querySelectorAll('section, .stat-card, .medie-container, .commenti-container');
+    elementiDaAnimare.forEach(el => {
+        el.classList.add('animato');
+        observer.observe(el);
+    });
+}
+
+/**
+ * STELLE BOUNCE - Effetto rimbalzo al click
+ * 
+ * Quando clicchi su una stella, aggiungiamo la classe .bounce
+ * alla label corrispondente e a tutte le label "sorelle" che
+ * si colorano. Dopo che l'animazione finisce (400ms), rimuoviamo
+ * la classe così può ripartire al prossimo click.
+ */
+function inizializzaStelleBounce() {
+    // Selezioniamo tutti i radio button delle stelle
+    const stelleRadio = document.querySelectorAll('.stelle input[type="radio"]');
+    
+    stelleRadio.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Troviamo il contenitore .stelle di questo radio button
+            const container = this.closest('.stelle');
+            const labels = container.querySelectorAll('label');
+            
+            // Aggiungiamo .bounce a tutte le label
+            labels.forEach(label => {
+                label.classList.remove('bounce'); // Reset (necessario per ri-triggerare)
+                // Piccolo trucco: forziamo il browser a "ricalcolare" lo stile
+                // prima di riaggiungere la classe, altrimenti non riparte l'animazione
+                void label.offsetWidth;
+                label.classList.add('bounce');
+            });
+            
+            // Rimuoviamo .bounce dopo che l'animazione finisce (400ms)
+            setTimeout(() => {
+                labels.forEach(label => label.classList.remove('bounce'));
+            }, 400);
+        });
+    });
+}
+
+/**
+ * CONTATORE ANIMATO - Il numero conta da 0 al valore reale
+ * 
+ * Invece di mostrare subito "15 risposte", il numero parte da 0
+ * e conta rapidamente fino al valore finale. L'effetto è dato da
+ * requestAnimationFrame, che chiede al browser di eseguire una
+ * funzione ad ogni frame (circa 60 volte al secondo).
+ * 
+ * La durata totale dell'animazione è proporzionale al numero,
+ * con un minimo di 500ms e un massimo di 1500ms.
+ */
+function animaContatore(valoreFinale) {
+    const elemento = document.querySelector('#totale-risposte .stat-numero');
+    
+    // Se il valore è 0, non serve animare
+    if (valoreFinale === 0) {
+        elemento.textContent = '0';
+        return;
+    }
+    
+    const durata = Math.min(1500, Math.max(500, valoreFinale * 50)); // ms
+    const inizio = performance.now(); // Timestamp preciso di quando inizia
+    
+    function aggiorna(tempoCorrente) {
+        // Calcoliamo la percentuale di completamento (0 → 1)
+        const progresso = Math.min((tempoCorrente - inizio) / durata, 1);
+        
+        // easeOutQuad: la velocità rallenta verso la fine (effetto naturale)
+        // Invece di contare a velocità costante, accelera all'inizio
+        // e decelera alla fine, come un oggetto che frena.
+        const easing = 1 - (1 - progresso) * (1 - progresso);
+        
+        // Calcoliamo il valore corrente e lo mostriamo
+        const valoreMostrato = Math.round(easing * valoreFinale);
+        elemento.textContent = valoreMostrato;
+        
+        // Se non abbiamo finito, chiediamo un altro frame
+        if (progresso < 1) {
+            requestAnimationFrame(aggiorna);
+        }
+    }
+    
+    // Avviamo l'animazione
+    requestAnimationFrame(aggiorna);
+}
+
+
+/* ============================================
+   9. INIZIALIZZAZIONE
+   ============================================
+   
+   DOMContentLoaded è l'evento che si attiva quando
+   l'HTML è stato completamente caricato e parsato.
+   È il momento sicuro per iniziare a manipolare il DOM.
+   
+   All'avvio, carichiamo i feedback da Google Sheets
+   per mostrare le statistiche condivise di tutti gli utenti,
+   e inizializziamo tutte le animazioni.
+*/
+
 document.addEventListener('DOMContentLoaded', async function() {
     
     // Colleghiamo l'evento submit del form alla nostra funzione
     const form = document.getElementById('form-feedback');
     form.addEventListener('submit', gestisciInvio);
+    
+    // Inizializziamo le animazioni
+    inizializzaFadeIn();        // Fade-in allo scroll
+    inizializzaStelleBounce();  // Bounce delle stelle al click
     
     // Carichiamo i feedback da Google Sheets (dati condivisi)
     console.log('Caricamento feedback da Google Sheets...');
@@ -527,8 +668,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Aggiorniamo la dashboard con i dati remoti
     aggiornaDashboard();
     
+    // Animiamo il contatore del totale risposte
+    animaContatore(feedbackRemoti.length);
+    
     // Log in console per debug (visibile con F12 → Console)
-    console.log('App Feedback inizializzata!');
+    console.log('App Feedback inizializzata con animazioni!');
     console.log(`Feedback remoti: ${feedbackRemoti.length}`);
     console.log(`Feedback locali (backup): ${getFeedbacksLocali().length}`);
 });
