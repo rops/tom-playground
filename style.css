@@ -175,6 +175,8 @@ textarea {
     direction: rtl;        /* Inverte l'ordine visivo */
     display: inline-flex;  /* Le stelle stanno sulla stessa riga */
     gap: 0.15rem;
+    cursor: default;       /* Niente stanghetta di testo */
+    user-select: none;     /* Impedisce selezione testo */
 }
 
 /* Nascondiamo i radio button veri */
